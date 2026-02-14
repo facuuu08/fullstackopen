@@ -9,13 +9,13 @@ const Content = ({parts}) => (
   )
 
 const Total = ({parts}) => {
-  let sum=0
-  parts.forEach(part => {
-    sum += part.exercises
-  })
+  const total = parts.reduce((sum, part) => {
+    console.log('qué está pasando', sum, part)
+    return sum + part.exercises
+  }, 0)
 
   return (
-    <b>total of {sum} exercises</b>
+    <b>total of {total} exercises</b>
   )
 }
 
