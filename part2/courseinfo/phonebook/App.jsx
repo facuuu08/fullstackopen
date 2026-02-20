@@ -1,4 +1,3 @@
-import Persons from './components/Persons'       
 import personService from './services/persons'   
 import {useState, useEffect} from 'react'
 import axios from 'axios'
@@ -13,12 +12,8 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    console.log('effect')
-    axios
-    .get('http://localhost:3001/persons')
-    .then(response => {
-      console.log('promise fulfilled')
-      setPersons(response.data)
+    personService.getAll().then(initialPersons => {
+      setPersons(initialPersons)
     })
   }, [])
 
@@ -28,25 +23,34 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
-
     if (persons.some(p => p.name === newName)) {
       alert(`${newName} is already added to phonebook`)
       return
     }
 
-    const personObject = {
-      name: newName,
-      number: newNumber
-    }
+    const personObject = { name: newName, number: newNumber }
 
-    axios 
-      .post('http://localhost:3001/persons', personObject) 
-      .then(response => {
-        setPersons(persons.concat(response.data))
-        setNewName('')  
-        setNewNumber('')  
-      })
-  } 
+    personService.create(personObject).then(returnedPerson => {
+      setPersons(persons.concat(returnedPerson))
+      setNewName('')
+      setNewNumber('')
+    })
+  }
+
+  const deletePersonOf = (id) => {
+    const person = persons.find(p => p.id === id)
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter(p => p.id !== id))
+        })
+        .catch(error => {
+          alert(`The person '${person.name}' was already deleted from server`)
+          setPersons(persons.filter(p => p.id !== id))
+        }) 
+    }
+  }
 
   const personsToShow = persons.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -56,18 +60,14 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
       <Filter value={searchTerm} onChange={handleSearchChange} />
-
       <h3>Add a new</h3>
       <PersonForm 
-        onSubmit={addPerson}
-        nameValue={newName}
-        onNameChange={handleNameChange}
-        numberValue={newNumber}
-        onNumberChange={handleNumberChange}
+        onSubmit={addPerson} 
+        nameValue={newName} onNameChange={handleNameChange}
+        numberValue={newNumber} onNumberChange={handleNumberChange}
       />
-
       <h3>Numbers</h3>
-      <Persons personsToShow={personsToShow} />
+      <Persons personsToShow={personsToShow} deletePerson={deletePersonOf} />
     </div>
   )
 }
